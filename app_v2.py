@@ -84,19 +84,27 @@ df_target = df_target.set_index("SK_ID_CURR")
 
 df_target = df_target.merge(df_results, how='inner', on='SK_ID_CURR')
 
-X = df_target.iloc[:,1:18]
-y = df.iloc[:,0]
+df_target = df_target.drop(['RESULT'], axis=1)
+#df_target['RESULT'] = df_target['RESULT'].replace('SOLVABLE', [0])
+#df_target['RESULT'] = df_target['RESULT'].replace('NON SOLVABLE', [1])
 
-#lime_explainer = LimeTabularExplainer(X.values,
+X = df_target.iloc[:,1:18]
+y = df_target.iloc[:,0]
+
+#lime_explainer = LimeTabularExplainer(int(X.values),
                              #feature_names=X.columns,
                              #discretize_continuous=False)
 
-explainer = lime.lime_tabular.LimeTabularExplainer(int(X.values) ,class_names=['Solvable', 'Non Solvable'], feature_names = X.columns,
-                                                   kernel_width=3, verbose=False)
+predict_df = lambda x: df_target.predict_proba(encoder.transform(x))
 
-exp = lime_explainer.explain_instance(id_client.values,
-                                rf.predict_proba,
+explainer = lime.lime_tabular.LimeTabularExplainer(df_target ,class_names=['Solvable', 'Non Solvable'], feature_names = X.columns,
+                                                   kernel_width=3, verbose=False, discretize_continuous=False)
+
+exp = explainer.explain_instance(id_client,
+                                predict_df,
                                 num_features=10)
+
+#exp.reshape(1, -1)
 
 #exp = int(exp)
 
